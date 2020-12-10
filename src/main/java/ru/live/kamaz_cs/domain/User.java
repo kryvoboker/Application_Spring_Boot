@@ -7,6 +7,8 @@ import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -31,6 +33,39 @@ public class User implements UserDetails {
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id")) // говорит, что даное поле будет храница в отдельной таблице user_role, которая не описана в мапинге и связываем ее с текущей таблицей колонкой user_id
     @Enumerated(EnumType.STRING) // даем знать базе, тобы таблица ролей хранилась в виде строки
     private Set<Role> roles;
+
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY) // mappedBy - обратная связь, FetchType.LAZY - означает, что при загрузке пользователя - все его сообщения автоматически подгружаться не должны
+    // в целом - это мапинг и это позволит получать все сообщения, которые были созданы пользователем
+    private Set<Message> messages;
+
+    @ManyToMany
+    @JoinTable( // это таблица подписок на нас
+            name = "user_subscriptions",
+            joinColumns = { @JoinColumn(name = "channel_id") },
+            inverseJoinColumns = { @JoinColumn(name = "subscriber_id") }
+    )
+    private Set<User> subscribers = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable( // это та же предыдущая таблица, но уже с нашими подписчиками
+            name = "user_subscriptions",
+            joinColumns = {@JoinColumn(name = "subscriber_id")},
+            inverseJoinColumns = {@JoinColumn(name = "channel_id")}
+    )
+    private Set<User> subscriptions = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user = (User) o;
+        return Objects.equals(getId(), user.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
 
     public boolean isAdmin() {
         return roles.contains(Role.ADMIN);
@@ -117,4 +152,27 @@ public class User implements UserDetails {
         this.roles = roles;
     }
 
+    public Set<Message> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(Set<Message> messages) {
+        this.messages = messages;
+    }
+
+    public Set<User> getSubscribers() {
+        return subscribers;
+    }
+
+    public void setSubscribers(Set<User> subscribers) {
+        this.subscribers = subscribers;
+    }
+
+    public Set<User> getSubscriptions() {
+        return subscriptions;
+    }
+
+    public void setSubscriptions(Set<User> subscriptions) {
+        this.subscriptions = subscriptions;
+    }
 }

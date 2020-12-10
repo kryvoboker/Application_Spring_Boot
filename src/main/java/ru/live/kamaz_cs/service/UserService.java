@@ -42,7 +42,7 @@ public class UserService implements UserDetailsService {
     public boolean addUser(User user) {
         final User userFromDb = repository.findByUsername(user.getUsername());
 
-        if (userFromDb != null) { // если пользователь найден в базе данных, то возвращаем false и сообщаем, что он не создан
+        if (userFromDb != null) { // если пользователь найден в базе данных, то возвращаем false и сообщаем, что он создан
             return false;
         }
 
@@ -124,5 +124,15 @@ public class UserService implements UserDetailsService {
         if (isEmailChanged) {
             sendMessage(user);
         }
+    }
+
+    public void subscriber(User currentUser, User user) {
+        user.getSubscribers().add(currentUser);
+        repository.save(user);
+    }
+
+    public void unsubscriber(User currentUser, User user) {
+        user.getSubscribers().remove(currentUser);
+        repository.save(user);
     }
 }
